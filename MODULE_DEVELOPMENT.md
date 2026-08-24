@@ -29,7 +29,7 @@
 ## Verification Baseline
 - Required commands/checks: `npm --prefix frontend run check`; `npm --prefix frontend run test`; `npm --prefix frontend run build`; `./mvnw verify`; public denylist and secret scans.
 - Consumer and contract checks: empty PostgreSQL migration, Vue API build, Docker Compose config, visible browser screenshots from the sanitized runtime.
-- Last verified revision/state: sanitized runtime on 2026-08-24; Java 21 `./mvnw verify` passed 82 tests against PostgreSQL 18.6 and Flyway V1–V56/V30–V56; Vue typecheck, 8 test files/21 tests and production build passed; Compose configuration validated; visible UI lifecycle passed in 45.4 seconds; 12 screenshots were captured at 1440×900 and passed visual/OCR denylist review; Gitleaks and Trivy secret scans reported zero findings. Remote visibility and rendered README remain the only pre-publication checks.
+- Last verified revision/state: sanitized runtime on 2026-08-24; Java 21 `./mvnw verify` passed 82 tests against PostgreSQL 18.6 and Flyway V1–V56/V30–V56; Vue typecheck, 8 test files/21 tests and production build passed; Compose configuration validated; visible UI lifecycle passed in 45.4 seconds; 12 screenshots were captured at 1440×900 and passed visual/OCR denylist review; Gitleaks and Trivy secret scans reported zero findings; GitHub confirmed a public `main` repository, served the README assets, and passed both frontend and backend CI jobs with current Actions runtimes.
 
 ## Open Questions
 - Unresolved decision: None for the initial public snapshot.
