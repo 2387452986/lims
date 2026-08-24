@@ -2,7 +2,7 @@
   <img src="frontend/public/brand/institution-logo.svg" width="84" alt="澜川智检科技有限公司虚构标志" />
 </p>
 
-<h1 align="center">试验检测信息管理系统</h1>
+<h1 align="center">LIMS（试验检测信息管理系统）</h1>
 
 <p align="center">
   面向检测机构的委托、样品、任务、试验、报告、设备与质量闭环平台
@@ -13,7 +13,7 @@
   <img alt="Spring Boot 4.1" src="https://img.shields.io/badge/Spring%20Boot-4.1-5d9f35" />
   <img alt="Vue 3" src="https://img.shields.io/badge/Vue-3-42b883" />
   <img alt="PostgreSQL 18" src="https://img.shields.io/badge/PostgreSQL-18-336791" />
-  <a href="https://github.com/2387452986/lims-showcase/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/2387452986/lims-showcase/actions/workflows/ci.yml/badge.svg" /></a>
+  <a href="https://github.com/2387452986/lims/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/2387452986/lims/actions/workflows/ci.yml/badge.svg" /></a>
 </p>
 
 > [!IMPORTANT]

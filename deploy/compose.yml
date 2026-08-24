@@ -1,4 +1,4 @@
-name: lims-showcase
+name: lims-public
 
 x-logging: &default-logging
   driver: json-file
@@ -49,7 +49,7 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
-    image: ${LIMS_IMAGE:-lims-showcase:0.1.0-SNAPSHOT}
+    image: ${LIMS_IMAGE:-lims-public:0.1.0-SNAPSHOT}
     restart: unless-stopped
     read_only: true
     tmpfs:
