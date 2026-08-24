@@ -1,0 +1,21 @@
+{
+  "annotations": {"list": []},
+  "editable": false,
+  "panels": [
+    {"type":"stat","title":"应用状态","gridPos":{"h":5,"w":4,"x":0,"y":0},"targets":[{"expr":"up{job=\"lims\"}","legendFormat":"UP"}]},
+    {"type":"timeseries","title":"HTTP 请求 P95","gridPos":{"h":8,"w":10,"x":4,"y":0},"targets":[{"expr":"histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket[5m])))","legendFormat":"P95"}]},
+    {"type":"timeseries","title":"5xx 错误率","gridPos":{"h":8,"w":10,"x":14,"y":0},"targets":[{"expr":"sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m]))","legendFormat":"5xx/s"}]},
+    {"type":"stat","title":"待执行作业","gridPos":{"h":5,"w":4,"x":0,"y":5},"targets":[{"expr":"lims_background_jobs_ready"}]},
+    {"type":"stat","title":"失败作业","gridPos":{"h":5,"w":4,"x":4,"y":8},"targets":[{"expr":"lims_background_jobs_failed"}]},
+    {"type":"stat","title":"备份年龄（秒）","gridPos":{"h":5,"w":5,"x":8,"y":8},"targets":[{"expr":"lims_backup_age_seconds"}]},
+    {"type":"stat","title":"文件卷可用空间","gridPos":{"h":5,"w":5,"x":13,"y":8},"fieldConfig":{"defaults":{"unit":"bytes"}},"targets":[{"expr":"lims_file_store_free_bytes"}]},
+    {"type":"stat","title":"证书剩余时间","gridPos":{"h":5,"w":6,"x":18,"y":8},"fieldConfig":{"defaults":{"unit":"s"}},"targets":[{"expr":"lims_tls_certificate_expiry_seconds"}]}
+  ],
+  "schemaVersion": 41,
+  "tags": ["lims", "production"],
+  "templating": {"list": []},
+  "time": {"from":"now-6h","to":"now"},
+  "title": "LIMS 生产运行总览",
+  "uid": "lims-overview",
+  "version": 1
+}

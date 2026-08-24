@@ -1,0 +1,14 @@
+.git
+.idea
+.vscode
+audit
+docs/design
+frontend/node_modules
+frontend/dist
+frontend/test-results*
+frontend/playwright-report*
+target/*
+!target/lims-0.1.0-SNAPSHOT.jar
+var
+deploy/certs
+*.log

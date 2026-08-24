@@ -1,0 +1,39 @@
+<script setup lang="ts">
+import { Refresh, Search } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { api, errorMessage } from '../api'
+import DomainExportControl from '../components/DomainExportControl.vue'
+import { useAuthStore } from '../stores/auth'
+interface CursorPage<T>{items:T[];nextCursor?:string;hasMore:boolean;total:number}
+interface Row{id:string;commissionId:string;taskId:string;commissionNumber:string;projectNumber:string;projectName:string;customerName:string;taskNumber:string;sampleNumber:string;sampleName:string;parameterCode:string;parameterName:string;testerName:string;equipmentCode?:string;equipmentName?:string;revision:number;result:string;state:string;version:number;submittedAt?:string;confirmedAt?:string;updatedAt:string}
+const route=useRoute();const router=useRouter();const auth=useAuthStore();const key=computed(()=>String(route.params.moduleKey));const returned=computed(()=>key.value==='test-return-records');const ledger=computed(()=>key.value==='test-ledger')
+const title=computed(()=>returned.value?'试验退回记录':ledger.value?'试验台账':'试验检测');const description=computed(()=>returned.value?'追踪退回试验记录并进入原任务修正或复测':ledger.value?'查询任务、样品、检测人员、设备、版本与结论':'录入原始记录，办理提交、退回、确认和数据修改申请')
+const rows=ref<Row[]>([]);const loading=ref(false);const total=ref(0);const nextCursor=ref('');const cursors=ref<string[]>([]);const pageSize=ref(50);const filters=reactive({q:'',state:String(route.query.state??''),result:'',dateRange:[] as string[]})
+const states:Record<string,string>={DRAFT:'草稿',SUBMITTED:'待确认',RETURNED:'已退回',CONFIRMED:'已确认',SUPERSEDED:'已被修订'};const results:Record<string,string>={PENDING:'待判定',CONFORMING:'合格',NONCONFORMING:'不合格',INVALID:'数据无效'}
+const canExport=computed(()=>auth.user?.permissions.includes('EXPORT_DATA'));const exportPayload=computed(()=>({view:returned.value?'RETURNED':ledger.value?'TEST_LEDGER':'TESTS',q:filters.q,state:filters.state,result:filters.result,from:filters.dateRange[0]||null,to:filters.dateRange[1]||null}))
+function params(cursor=''){const value=new URLSearchParams({view:returned.value?'RETURNED':ledger.value?'TEST_LEDGER':'TESTS',q:filters.q,state:filters.state,result:filters.result,cursor,limit:String(pageSize.value)});if(filters.dateRange[0])value.set('from',filters.dateRange[0]);if(filters.dateRange[1])value.set('to',filters.dateRange[1]);return value.toString()}
+async function load(reset=false){if(reset)cursors.value=[];loading.value=true;try{const page=await api<CursorPage<Row>>(`/api/tests/ledger?${params(cursors.value.at(-1)??'')}`);rows.value=page.items;total.value=page.total;nextCursor.value=page.nextCursor??''}catch(error){ElMessage.error(errorMessage(error,'试验记录加载失败'))}finally{loading.value=false}}
+function reset(){Object.assign(filters,{q:'',state:'',result:'',dateRange:[]});load(true)}function next(){if(nextCursor.value){cursors.value.push(nextCursor.value);load()}}function previous(){if(cursors.value.length){cursors.value.pop();load()}}function openFlow(row:Row){router.push({path:`/flow/${row.commissionId}`,query:{tab:'tests'}})}
+function format(value?:string){return value?new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(value)):'—'}function stateType(value:string){return value==='CONFIRMED'?'success':value==='RETURNED'?'danger':value==='SUPERSEDED'?'info':'warning'}function resultType(value:string){return value==='CONFORMING'?'success':['NONCONFORMING','INVALID'].includes(value)?'danger':'info'}
+watch(key,()=>reset());watch(()=>route.query.state,(value)=>{filters.state=String(value??'');load(true)});onMounted(()=>load(true))
+</script>
+<template>
+  <section class="page module-page domain-queue-page">
+    <header class="page-heading"><div><h1>{{ title }}</h1><p>{{ description }}</p></div><el-button type="primary" @click="router.push('/modules/tasks')">查看任务队列</el-button></header>
+    <section class="domain-filter-bar domain-filter-five"><el-input v-model="filters.q" clearable :prefix-icon="Search" placeholder="任务、样品、参数、工程、客户、人员或设备" @keyup.enter="load(true)" @clear="load(true)"/><el-select v-model="filters.state" clearable placeholder="全部记录状态"><el-option v-for="(label,value) in states" :key="value" :label="label" :value="value"/></el-select><el-select v-model="filters.result" clearable placeholder="全部检测结论"><el-option v-for="(label,value) in results" :key="value" :label="label" :value="value"/></el-select><el-date-picker v-model="filters.dateRange" type="daterange" value-format="YYYY-MM-DD" start-placeholder="更新开始" end-placeholder="更新结束"/><div class="domain-filter-actions"><el-button type="primary" @click="load(true)">查询</el-button><el-button :icon="Refresh" @click="reset">重置</el-button><DomainExportControl v-if="canExport" endpoint="/api/tests/exports" resource-type="TEST_LEDGER" :payload="exportPayload"/></div></section>
+    <el-table v-loading="loading" :data="rows" border stripe class="module-table domain-queue-table" row-key="id" @row-dblclick="openFlow">
+      <el-table-column label="任务 / 样品" width="210" fixed="left"><template #default="scope"><div class="cell-stack"><strong>{{ scope.row.taskNumber }}</strong><span>{{ scope.row.sampleNumber }} · {{ scope.row.sampleName }}</span></div></template></el-table-column>
+      <el-table-column label="参数 / 版本" min-width="220"><template #default="scope"><div class="cell-stack"><strong>{{ scope.row.parameterName }}</strong><span>{{ scope.row.parameterCode }} · 记录 R{{ scope.row.revision }}</span></div></template></el-table-column>
+      <el-table-column label="工程 / 委托" min-width="250"><template #default="scope"><div class="cell-stack"><strong>{{ scope.row.projectName }}</strong><span>{{ scope.row.projectNumber }} · {{ scope.row.commissionNumber }}</span></div></template></el-table-column>
+      <el-table-column label="检测人员 / 设备" min-width="170"><template #default="scope"><div class="cell-stack"><strong>{{ scope.row.testerName }}</strong><span>{{ scope.row.equipmentName?`${scope.row.equipmentCode} · ${scope.row.equipmentName}`:'未绑定设备' }}</span></div></template></el-table-column>
+      <el-table-column label="提交 / 确认" width="200"><template #default="scope"><div class="cell-stack"><strong>{{ format(scope.row.submittedAt) }}</strong><span>{{ format(scope.row.confirmedAt) }}</span></div></template></el-table-column>
+      <el-table-column label="结论" width="100" fixed="right" align="center"><template #default="scope"><el-tag :type="resultType(scope.row.result)" effect="plain">{{ results[scope.row.result] }}</el-tag></template></el-table-column>
+      <el-table-column label="状态" width="100" fixed="right" align="center"><template #default="scope"><el-tag :type="stateType(scope.row.state)" effect="plain">{{ states[scope.row.state] }}</el-tag></template></el-table-column>
+      <el-table-column label="操作" width="94" fixed="right" align="center"><template #default="scope"><el-tooltip :content="returned?'处理退回记录':'查看原始记录'" placement="top"><el-button class="queue-row-action" link type="primary" @click="openFlow(scope.row)">{{ returned?'处理退回':'查看记录' }}</el-button></el-tooltip></template></el-table-column>
+      <template #empty><el-empty :description="returned?'暂无试验退回记录':'暂无符合条件的试验记录'"/></template>
+    </el-table>
+    <footer class="table-footer domain-pagination"><span>共 {{ total }} 条 · 第 {{ cursors.length+1 }} 页 · 历史版本不原地覆盖</span><div><el-select v-model="pageSize" class="page-size-select" @change="load(true)"><el-option v-for="size in [20,50,100]" :key="size" :label="`${size} 条/页`" :value="size"/></el-select><el-button :disabled="!cursors.length" @click="previous">上一页</el-button><el-button type="primary" plain :disabled="!nextCursor" @click="next">下一页</el-button></div></footer>
+  </section>
+</template>

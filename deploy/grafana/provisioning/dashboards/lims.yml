@@ -1,0 +1,10 @@
+apiVersion: 1
+providers:
+  - name: LIMS
+    orgId: 1
+    folder: 试验检测信息管理系统
+    type: file
+    disableDeletion: true
+    editable: false
+    options:
+      path: /var/lib/grafana/dashboards

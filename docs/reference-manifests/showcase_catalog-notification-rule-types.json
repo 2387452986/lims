@@ -1,0 +1,43 @@
+{
+  "sourceSystem": "showcase_catalog",
+  "sourcePath": "系统设置 / 基础数据 / 消息通知配置",
+  "sourceUrl": "https://showcase.invalid/company/message_config/pages?",
+  "capturedAt": "2026-08-21T11:08:51+08:00",
+  "scope": "当前试用账号可见页面、表单和内联业务脚本；未保存试用站记录",
+  "list": {
+    "columns": ["消息类型", "条件限制", "通知人员", "其他通知人员", "操作"],
+    "actions": ["添加", "修改", "删除"],
+    "pageSize": 20,
+    "supportsPageJump": true
+  },
+  "form": {
+    "requiredFields": ["消息类型", "条件限制"],
+    "conditionUnit": "天",
+    "observedMinimumConditionDays": 0,
+    "recipientSelectorLabelDependsOnType": true,
+    "submitLabel": "确定"
+  },
+  "recipientSelector": {
+    "filters": ["申报状态", "人员类型", "姓名", "职位"],
+    "columns": ["选择", "头像", "姓名", "性别", "手机号码", "身份证号码", "职称", "所在部门", "所在单位"],
+    "supportsSelectedStrip": true,
+    "supportsPagination": true
+  },
+  "eventTypes": [
+    {"sourceKey": 1, "code": "COMMISSION_PENDING_SUBMISSION", "label": "委托单待提交流转", "selectableRecipientKind": "PRIMARY", "selectableRecipientLabel": "通知人员"},
+    {"sourceKey": 2, "code": "TASK_PENDING_ASSIGNMENT", "label": "任务单待派发", "selectableRecipientKind": "PRIMARY", "selectableRecipientLabel": "通知人员"},
+    {"sourceKey": 3, "code": "TASK_PENDING_ACCEPTANCE", "label": "任务单待接收", "selectableRecipientKind": "ADDITIONAL", "selectableRecipientLabel": "其他通知人员"},
+    {"sourceKey": 4, "code": "TASK_PENDING_TEST", "label": "任务单待检测", "selectableRecipientKind": "ADDITIONAL", "selectableRecipientLabel": "其他通知人员"},
+    {"sourceKey": 5, "code": "REPORT_PENDING_DRAFT", "label": "报告待编制", "selectableRecipientKind": "ADDITIONAL", "selectableRecipientLabel": "其他通知人员"},
+    {"sourceKey": 6, "code": "REPORT_PENDING_CHECK", "label": "报告待校核", "selectableRecipientKind": "ADDITIONAL", "selectableRecipientLabel": "其他通知人员"},
+    {"sourceKey": 7, "code": "REPORT_PENDING_REVIEW", "label": "报告待审核", "selectableRecipientKind": "ADDITIONAL", "selectableRecipientLabel": "其他通知人员"},
+    {"sourceKey": 8, "code": "REPORT_PENDING_ISSUE", "label": "报告待签发", "selectableRecipientKind": "ADDITIONAL", "selectableRecipientLabel": "其他通知人员"},
+    {"sourceKey": 9, "code": "EQUIPMENT_VERIFICATION", "label": "设备检定", "selectableRecipientKind": "PRIMARY", "selectableRecipientLabel": "通知人员"},
+    {"sourceKey": 10, "code": "SAMPLE_RETENTION_CLEANUP", "label": "样品留样清理", "selectableRecipientKind": "ADDITIONAL", "selectableRecipientLabel": "其他通知人员"}
+  ],
+  "unexposed": [
+    "试用站当前列表为空，因此不存在可读取的既有规则记录",
+    "页面未展示条件限制上限",
+    "未获取其他角色专属消息类型"
+  ]
+}

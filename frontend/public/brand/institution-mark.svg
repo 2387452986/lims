@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">澜川智检图标</title>
+  <desc id="desc">由水滴、流线与校验标记组成的虚构品牌图标</desc>
+  <defs>
+    <linearGradient id="g" x1="18" y1="18" x2="108" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0b4aa2"/>
+      <stop offset="0.55" stop-color="#1479d2"/>
+      <stop offset="1" stop-color="#14b8a6"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="32" fill="url(#g)"/>
+  <path d="M64 20c18 22 30 37 30 54a30 30 0 1 1-60 0c0-17 12-32 30-54Z" fill="#fff" opacity=".96"/>
+  <path d="M43 76c10 7 20 8 30 3 6-3 11-8 16-15" fill="none" stroke="#0b4aa2" stroke-width="8" stroke-linecap="round"/>
+  <path d="m54 73 9 9 20-22" fill="none" stroke="#14b8a6" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

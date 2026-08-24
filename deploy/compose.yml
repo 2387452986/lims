@@ -1,0 +1,163 @@
+name: lims-showcase
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 50m
+    max-file: "10"
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE:-lims}
+      POSTGRES_USER: lims
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      TZ: UTC
+    command:
+      - postgres
+      - -c
+      - timezone=UTC
+      - -c
+      - log_timezone=UTC
+      - -c
+      - max_connections=150
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - pg_stat_statements.track=all
+      - -c
+      - pg_stat_statements.max=10000
+      - -c
+      - track_io_timing=on
+      - -c
+      - log_min_duration_statement=${POSTGRES_LOG_MIN_DURATION_MS:-1000}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lims -d ${POSTGRES_DATABASE:-lims}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-55432}:5432"
+    networks: [backend]
+    logging: *default-logging
+
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: ${LIMS_IMAGE:-lims-showcase:0.1.0-SNAPSHOT}
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      # Playwright Java extracts its signed driver into java.io.tmpdir before launching
+      # the system Chromium renderer. Keep the rest of the container read-only while
+      # allowing this bounded worker scratch space to execute.
+      - /tmp:rw,exec,nosuid,nodev,size=1g,mode=1777
+    environment:
+      # PostgreSQL stays UTC. Java's business-date boundary follows the institution's
+      # Asia/Shanghai calendar so "today" validations do not lag eight hours.
+      TZ: Asia/Shanghai
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DATABASE:-lims}
+      DB_USER: lims
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      MANAGEMENT_SERVER_PORT: 9091
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      FILE_STORE_PATH: /data/files
+      BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:-admin}
+      BOOTSTRAP_ADMIN_SECRET: ${BOOTSTRAP_ADMIN_SECRET:-}
+      SIGNING_ASSET_KEY: ${SIGNING_ASSET_KEY:?SIGNING_ASSET_KEY is required}
+      SIGNING_ASSET_REQUIRED: ${SIGNING_ASSET_REQUIRED:-false}
+      PERSONNEL_DATA_KEY: ${PERSONNEL_DATA_KEY:?PERSONNEL_DATA_KEY is required}
+      DEV_SEED_PASSWORD: ${DEV_SEED_PASSWORD:-}
+      JAVA_TOOL_OPTIONS: >-
+        -Duser.timezone=Asia/Shanghai
+        -XX:StartFlightRecording=filename=/tmp/lims.jfr,settings=default,disk=true,maxage=24h,maxsize=256m,dumponexit=true
+      DB_POOL_MAX_SIZE: ${DB_POOL_MAX_SIZE:-32}
+      DB_POOL_MIN_IDLE: ${DB_POOL_MIN_IDLE:-8}
+      DB_POOL_CONNECTION_TIMEOUT_MS: ${DB_POOL_CONNECTION_TIMEOUT_MS:-3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - file_store:/data/files
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
+      - "127.0.0.1:${MANAGEMENT_PORT:-9091}:9091"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9091/actuator/health/readiness | grep -q '\"status\":\"UP\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+    networks: [backend]
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    logging: *default-logging
+
+  nginx:
+    image: nginx:1.29-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    profiles: ["production"]
+    ports:
+      - "${NGINX_HTTP_PORT:-8081}:80"
+      - "${NGINX_HTTPS_PORT:-8443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/proxy_params:/etc/nginx/proxy_params:ro
+      - ./certs:/etc/nginx/certs:ro
+    networks: [backend]
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx:size=64m
+      - /var/run:size=8m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    logging: *default-logging
+
+  prometheus:
+    image: prom/prometheus:v3.8.1
+    profiles: ["observability"]
+    restart: unless-stopped
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=30d"]
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+    networks: [backend]
+    logging: *default-logging
+
+  grafana:
+    image: grafana/grafana:12.4.1
+    profiles: ["observability"]
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is required}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-https://lims.example.invalid/monitoring/}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    expose: ["3000"]
+    networks: [backend]
+    logging: *default-logging
+
+volumes:
+  postgres_data:
+  file_store:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  backend:
+    internal: false

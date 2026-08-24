@@ -1,0 +1,15 @@
+CREATE OR REPLACE FUNCTION audit_operation_type(action_code varchar)
+RETURNS varchar LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $$
+  SELECT CASE
+    WHEN action_code ~ '(^|_)(LOGIN_SUCCESS|LOGIN_FAILED|LOGIN_FAILURE)$' THEN 'LOGIN'
+    WHEN action_code ~ '(^|_)LOGOUT(_SUCCESS)?$' THEN 'LOGOUT'
+    WHEN action_code ~ '(VIEW|VIEWED|DOWNLOAD|DOWNLOADED|EXPORT|EXPORTED|PRINT|PRINTED|PREVIEW|PREVIEWED|READ)$' THEN 'BROWSE'
+    WHEN action_code ~ '(CREATE|CREATED|UPLOAD|UPLOADED|OPEN|OPENED|ADD|ADDED|QUEUE|QUEUED)$' THEN 'CREATE'
+    WHEN action_code ~ '(DELETE|DELETED|DISCARD|DISCARDED|RETIRE|RETIRED|ARCHIVE|ARCHIVED|VOID|VOIDED|REVOKE|REVOKED)$' THEN 'DELETE'
+    ELSE 'UPDATE'
+  END
+$$;
+
+DROP INDEX audit_event_org_operation_time_ix;
+CREATE INDEX audit_event_org_operation_time_ix
+  ON audit_event(organization_id, audit_operation_type(action), occurred_at DESC, id DESC);

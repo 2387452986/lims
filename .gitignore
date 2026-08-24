@@ -1,0 +1,33 @@
+.DS_Store
+.idea/
+.vscode/
+target/
+frontend/node_modules/
+frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
+frontend/test-results*/
+frontend/playwright-report*/
+.playwright-cli/
+output/playwright/
+test-results/
+var/
+runtime/
+.env
+.env.*
+!.env.example
+deploy/secrets/
+deploy/certs/
+正式资料/
+
+# Reference-system screenshots and DOM captures may contain business or personal data.
+# Keep them as local audit evidence, never in Git.
+audit/reference-parity/
+audit/**/*.png
+audit/**/*.jpg
+audit/**/*.jpeg
+audit/**/*.txt
+
+# Product-design comparisons and browser evidence are regenerated for QA runs.
+docs/design/
+docs/evidence/

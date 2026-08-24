@@ -1,0 +1,22 @@
+# Builds a runtime image from a locally verified application artifact.
+# Run the normal frontend and Maven gates before using this file.
+FROM debian:trixie-slim
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends \
+       ca-certificates chromium fonts-noto-cjk openjdk-21-jre-headless wget \
+    && rm -rf /var/lib/apt/lists/*
+RUN groupadd --gid 10001 lims \
+    && useradd --uid 10001 --gid lims --no-create-home --shell /usr/sbin/nologin lims
+WORKDIR /app
+COPY target/lims-0.1.0-SNAPSHOT.jar app.jar
+RUN mkdir -p /data/files && chown -R lims:lims /app /data
+USER 10001
+EXPOSE 8080
+ENV CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium \
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    HOME=/tmp/lims-home \
+    XDG_CACHE_HOME=/tmp/lims-cache
+ENTRYPOINT ["java","-XX:MaxRAMPercentage=75","-Djava.security.egd=file:/dev/urandom","-jar","/app/app.jar"]

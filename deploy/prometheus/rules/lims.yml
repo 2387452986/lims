@@ -1,0 +1,58 @@
+groups:
+  - name: lims-production
+    rules:
+      - alert: LimsApplicationDown
+        expr: up{job="lims"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations: { summary: "试验检测信息管理系统不可用" }
+      - alert: LimsHighServerErrorRate
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count[5m])), 1) > 0.01
+        for: 10m
+        labels: { severity: warning }
+        annotations: { summary: "应用 5xx 错误率超过 1%" }
+      - alert: LimsQueryLatencyHigh
+        expr: histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{method="GET",uri!~"/actuator.*"}[5m]))) > 1
+        for: 10m
+        labels: { severity: warning }
+        annotations: { summary: "普通查询 P95 超过 1 秒" }
+      - alert: LimsWriteLatencyHigh
+        expr: histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{method!="GET",uri!~"/actuator.*"}[5m]))) > 2
+        for: 10m
+        labels: { severity: warning }
+        annotations: { summary: "业务写入 P95 超过 2 秒" }
+      - alert: LimsWorkerBacklog
+        expr: lims_background_jobs_ready > 100
+        for: 10m
+        labels: { severity: warning }
+        annotations: { summary: "后台作业积压超过 100" }
+      - alert: LimsWorkerFailure
+        expr: lims_background_jobs_failed > 0
+        for: 5m
+        labels: { severity: critical }
+        annotations: { summary: "后台作业存在最终失败" }
+      - alert: LimsFileStoreLowSpace
+        expr: lims_file_store_free_bytes < 107374182400
+        for: 15m
+        labels: { severity: warning }
+        annotations: { summary: "不可变文件卷剩余空间低于 100 GiB" }
+      - alert: LimsDatabasePoolSaturation
+        expr: hikaricp_connections_active / clamp_min(hikaricp_connections_max, 1) > 0.8
+        for: 10m
+        labels: { severity: warning }
+        annotations: { summary: "数据库连接池使用率超过 80%" }
+      - alert: LimsAccountsLocked
+        expr: lims_security_locked_accounts > 0
+        for: 5m
+        labels: { severity: warning }
+        annotations: { summary: "存在登录失败锁定账号" }
+      - alert: LimsTlsCertificateExpiring
+        expr: lims_tls_certificate_expiry_seconds < 2592000
+        for: 1h
+        labels: { severity: warning }
+        annotations: { summary: "内部 HTTPS 证书将在 30 天内到期或无法读取" }
+      - alert: LimsBackupRecoveryPointStale
+        expr: lims_backup_age_seconds > 3900
+        for: 10m
+        labels: { severity: critical }
+        annotations: { summary: "配对备份恢复点超过 65 分钟未更新" }

@@ -1,0 +1,40 @@
+server:
+  shutdown: graceful
+  servlet:
+    session:
+      cookie:
+        secure: ${COOKIE_SECURE:true}
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  datasource:
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:32}
+      minimum-idle: ${DB_POOL_MIN_IDLE:8}
+      connection-timeout: ${DB_POOL_CONNECTION_TIMEOUT_MS:3000}
+      validation-timeout: ${DB_POOL_VALIDATION_TIMEOUT_MS:1000}
+      idle-timeout: ${DB_POOL_IDLE_TIMEOUT_MS:600000}
+      max-lifetime: ${DB_POOL_MAX_LIFETIME_MS:1740000}
+      keepalive-time: ${DB_POOL_KEEPALIVE_MS:120000}
+
+management:
+  server:
+    port: 9091
+  health:
+    diskspace:
+      path: ${FILE_STORE_PATH:/data/files}
+  metrics:
+    system:
+      diskspace:
+        paths: ${FILE_STORE_PATH:/data/files}
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+lims:
+  signing:
+    require-assets: true
